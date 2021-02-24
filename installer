@@ -1,0 +1,31 @@
+#!/bin/bash
+# Crude install script for nginx-unit and a python3 module to /opt/unit
+#
+# Note that I had the following dependencies already:
+#  sudo apt install certbot ddclient python3-venv python3-dev build-essential libssl-dev libssl-doc libpcre2-dev
+#
+# Also note that if this fails, it leaves around the temporary build directory
+
+version=$1
+
+[ "$version" ] || {
+  echo >&2 "usage: $0 VERSION"
+  echo >&2 "  i.e. $0 1.22.0"
+  exit 1
+}
+
+[ -e "/opt/unit" ] && {
+  echo >&2 "unit install already exists"
+  exit 1
+}
+
+set -exo pipefail
+
+curl -L "https://github.com/nginx/unit/archive/$version.tar.gz" | tar -xzf -
+cd "unit-$version"
+./configure --openssl --prefix=/opt/unit
+./configure python --config="python3-config"
+make
+sudo make install
+cd ..
+rm -rf "unit-$version"
