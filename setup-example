@@ -1,16 +1,15 @@
 #!/bin/bash
 
 # Create a python3 virtual environment and an example FastAPI app
+# and sudo jam-it-all-in-/web
 
 set -exo pipefail
 
-python3 -m venv example-venv
-source example-venv/bin/activate
-pip install fastapi
-deactivate
-
-sudo mv example-venv /opt/
-sudo cp -r unit-example /opt/
+sudo mkdir -p -m 777 /web
+sudo -u nobody sh -c "python3 -m venv /web/venv; source /web/venv/bin/activate; pip install fastapi"
+sudo cp -r unit-example /web/
+sudo chown -R nobody: /web
+sudo chmod 555 /web
 
 sudo curl -X PUT --data-binary '{
   "listeners": {
