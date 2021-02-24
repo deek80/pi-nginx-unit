@@ -1,7 +1,9 @@
 #!/bin/bash
-# Crude install script for nginx-unit and a python3 module to /opt/unit
+# Crude install script for nginx-unit and a python3 module to /opt/unit.
+# This is the standard configure, make, make install flow.
 #
-# Note that if this fails, it leaves around the temporary build directory.
+# Note that if this fails, it leaves around the temporary build directory
+# for you to inspect (and clean up).
 
 version=$1
 

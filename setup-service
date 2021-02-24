@@ -1,0 +1,22 @@
+#!/bin/bash
+# This creates a systemd init script for unit, and
+# then "enable"s it (causes it to run on startup)
+
+echo '
+[Unit]
+Description=NGINX Unit
+After=network-online.target
+
+[Service]
+Type=forking
+PIDFile=/opt/unit/unit.pid
+ExecStart=/opt/unit/sbin/unitd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+' | sudo tee /etc/systemd/system/unit.service >/dev/null
+
+sudo systemctl enable unit
+sudo systemctl start unit
+

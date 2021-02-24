@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create a python3 virtual environment and an example FastAPI app
-# and sudo jam-it-all-in-/web
+# and sudo jam-it-all-into /web
 
 set -exo pipefail
 

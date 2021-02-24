@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This calls certbot to get a TLS certificate for your domain
+# and then it loads this certificate into nginx unit.
+
 domain=$1
 
 [ "$domain" ] || {
