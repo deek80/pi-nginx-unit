@@ -1,0 +1,19 @@
+#!/bin/bash
+# Crude install scripts so I can remember what I did to set up nginx-unit and
+# python on a raspberry pi running Raspberry Pi OS
+#
+# Not all of these are essential for nginx-unit. The build docs on
+# https://unit.nginx.org/installation/#source-code are pretty good, and the
+# only reason I have this is because the binary formats at the time are only
+# available for x86 and not ARM.
+sudo apt install \
+  build-essential \
+  certbot \
+  ddclient \
+  libpcre2-dev \
+  libssl-dev \
+  libssl-doc \
+  python3-dev \
+  python3-venv \
+
+# I might try something with httpie-unixsocket for a nicer CLI experience

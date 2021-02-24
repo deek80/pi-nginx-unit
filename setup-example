@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Create a python3 virtual environment and an example FastAPI app
+
+set -exo pipefail
+
+python3 -m venv example-venv
+source example-venv/bin/activate
+pip install fastapi
+deactivate
+
+sudo mv example-venv /opt/
+sudo cp -r unit-example /opt/
+
+sudo curl -X PUT --data-binary '{
+  "listeners": {
+    "*:80": {
+      "pass": "applications/example"
+    },
+    "*:443": {
+      "pass": "applications/example",
+      "tls": {"certificate": "my-certificate"}
+    }
+  },
+  "applications": {
+      "example": {
+          "type": "python",
+          "home": "/opt/example-venv",
+          "path": "/opt/unit-example/",
+          "module": "redirector",
+          "callable": "app",
+          "processes": 2,
+      }
+  }
+}' --unix-socket /opt/unit/control.unit.sock localhost/config
