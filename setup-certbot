@@ -1,35 +1,32 @@
 #!/bin/bash
-
 # This calls certbot to get a TLS certificate for your domain
-# and then it loads this certificate into nginx unit.
+# and sets up auto-renewal with certbot's hooks
+set -eo PIPEFAIL
 
 domain=$1
-
 [ "$domain" ] || {
   echo >&2 "usage: $0 DOMAIN"
   echo >&2 "  - i.e. $0 my.website.com"
   exit 1
 }
-
-# unit will not be listenting to port 80 yet, so this is ok right now:
-sudo certbot certonly -d "$domain" --standalone
-sudo cat /etc/letsencrypt/live/"$domain"/{fullchain,privkey}.pem |\
-  curl -X PUT --data-binary @- --unix-socket /opt/unit/control.unit.sock localhost/certificates/my-certificate
-
-# TODO: automate the renewal, which will require:
-# - turning off unit's port 80 listener for a sec
-# - getting the new cert
-# - turning on unit's port 80 listener again
-# - loading the new cert into unit's config
-# - pointing your :443 listener to the new cert
-# - deleting the old cert from unit's config
-#
-# This can all be done easily with certbot's hooks. They have pre and post
-# cert update hooks (that only run when you actually need a new cert. most
-# of the time if you call `certbot renew` it's a no-op, so you can do it
-# every day in cron if you like) for exactly this situation.
-#
-# I just haven't had this set up for 90 days yet so haven't tackled renewal
+[ $EUID = 0 ] || {
+  echo >&2 "this script must be run as root"
+  exit 1
+}
 
 
+certbot certonly -d "$domain" --standalone
 
+# automate the cert renewal process
+function make_script {
+  path=$1; shift
+  ( for line in "$@"; do echo "$line"; done ) > "$path" && chmod +x "$path"
+}
+cp tools/admin.py /opt/unit/sbin/admin.py
+make_script /etc/letsencrypt/renewal-hooks/pre/"$domain" "/opt/unit/sbin/admin.py suspend-listener '*:80'"
+make_script /etc/letsencrypt/renewal-hooks/post/"$domain" "/opt/unit/sbin/admin.py restore-listener '*:80'"
+make_script /etc/letsencrypt/renewal-hooks/deploy/"$domain" \
+  "/opt/unit/sbin/admin.py load-cert '$domain'" \
+  "/opt/unit/sbin/admin.py use-latest-cert '$domain' '*:443'" \
+  "/opt/unit/sbin/admin.py delete-old-certs '$domain'"
+make_script /etc/cron.weekly/certbot-renew "certbot renew"

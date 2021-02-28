@@ -4,6 +4,7 @@
 #
 # Note that if this fails, it leaves around the temporary build directory
 # for you to inspect (and clean up).
+set -eo pipefail
 
 version=$1
 
@@ -19,7 +20,6 @@ version=$1
   exit 1
 }
 
-set -exo pipefail  # bail on any error
 
 curl -L "https://github.com/nginx/unit/archive/$version.tar.gz" | tar -xzf -
 cd "unit-$version"
