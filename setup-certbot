@@ -1,7 +1,7 @@
 #!/bin/bash
 # This calls certbot to get a TLS certificate for your domain
 # and sets up auto-renewal with certbot's hooks
-set -eo PIPEFAIL
+set -eo pipefail
 
 domain=$1
 [ "$domain" ] || {
@@ -14,7 +14,7 @@ domain=$1
   exit 1
 }
 
-
+# initial certificate
 certbot certonly -d "$domain" --standalone
 
 # automate the cert renewal process
@@ -22,11 +22,15 @@ function make_script {
   path=$1; shift
   ( for line in "$@"; do echo "$line"; done ) > "$path" && chmod +x "$path"
 }
-cp tools/admin.py /opt/unit/sbin/admin.py
-make_script /etc/letsencrypt/renewal-hooks/pre/"$domain" "/opt/unit/sbin/admin.py suspend-listener '*:80'"
-make_script /etc/letsencrypt/renewal-hooks/post/"$domain" "/opt/unit/sbin/admin.py restore-listener '*:80'"
+make_script /etc/letsencrypt/renewal-hooks/pre/"$domain" \
+  "/opt/unit/sbin/unit-admin suspend-listener '*:80'"
+
+make_script /etc/letsencrypt/renewal-hooks/post/"$domain" \
+  "/opt/unit/sbin/unit-admin restore-listener '*:80'"
+
 make_script /etc/letsencrypt/renewal-hooks/deploy/"$domain" \
-  "/opt/unit/sbin/admin.py load-cert '$domain'" \
-  "/opt/unit/sbin/admin.py use-latest-cert '$domain' '*:443'" \
-  "/opt/unit/sbin/admin.py delete-old-certs '$domain'"
+  "/opt/unit/sbin/unit-admin load-cert '$domain'" \
+  "/opt/unit/sbin/unit-admin use-latest-cert '$domain' '*:443'" \
+  "/opt/unit/sbin/unit-admin delete-old-certs '$domain'"
+
 make_script /etc/cron.weekly/certbot-renew "certbot renew"

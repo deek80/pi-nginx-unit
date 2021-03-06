@@ -1,34 +1,44 @@
 #!/bin/bash
+# Super crude creation of an example in /web
 
-# Create a python3 virtual environment and an example FastAPI app
-# and sudo jam-it-all-into /web
+set -eo pipefail
 
-set -exo pipefail
+domain=$1
+[ "$domain" ] || {
+  echo >&2 "usage: $0 DOMAIN"
+  echo >&2 "  - i.e. $0 my.website.com"
+  exit 1
+}
+[ $EUID = 0 ] || {
+  echo >&2 "this script must be run as root"
+  exit 1
+}
 
-sudo mkdir -p -m 777 /web
-sudo -u nobody sh -c "python3 -m venv /web/venv; source /web/venv/bin/activate; pip install fastapi"
-sudo cp -r unit-example /web/
-sudo chown -R nobody: /web
-sudo chmod 555 /web
+mkdir -p -m 777 /web/example
+sudo -u nobody bash -c "python3 -m venv /web/example/venv; source /web/example/venv/bin/activate; pip install fastapi"
+cp tools/example.py /web/example/example.py
+chown -R nobody: /web/example
+chmod 555 /web/example
 
-sudo curl -X PUT --data-binary '{
+curl -X PUT --data-binary '{
   "listeners": {
     "*:80": {
       "pass": "applications/example"
     },
     "*:443": {
       "pass": "applications/example",
-      "tls": {"certificate": "my-certificate"}
     }
   },
   "applications": {
       "example": {
           "type": "python",
-          "home": "/opt/example-venv",
-          "path": "/opt/unit-example/",
-          "module": "redirector",
+          "home": "/web/example/venv",
+          "path": "/web/example",
+          "module": "example",
           "callable": "app",
           "processes": 2,
       }
   }
 }' --unix-socket /opt/unit/control.unit.sock localhost/config
+
+/opt/unit/sbin/unit-admin use-latest-cert "$domain" '*:443'

@@ -31,3 +31,4 @@ cd ..
 rm -rf "unit-$version"  # cleanup temp directory
 
 sudo /opt/unit/sbin/unitd  # start unitd
+sudo cp tools/admin.py /opt/unit/sbin/unit-admin  # custom script for cert updates

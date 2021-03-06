@@ -2,6 +2,11 @@
 # This creates a systemd init script for unit, and
 # then "enable"s it (causes it to run on startup)
 
+[ $EUID = 0 ] || {
+  echo >&2 "this script must be run as root"
+  exit 1
+}
+
 echo '
 [Unit]
 Description=NGINX Unit
@@ -15,8 +20,8 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-' | sudo tee /etc/systemd/system/unit.service >/dev/null
+' | tee /etc/systemd/system/unit.service >/dev/null
 
-sudo systemctl enable unit
-sudo systemctl start unit
+systemctl enable unit
+systemctl start unit
 

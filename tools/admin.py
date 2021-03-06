@@ -7,32 +7,33 @@ from sys import argv
 
 
 def curl(*args):
-    command = run(
-        ("curl", "--unix-socket", "/opt/unit/control.unit.sock", *args),
-        capture_output=True,
+    output = loads(
+        run(
+            ("curl", "--unix-socket", "/opt/unit/control.unit.sock", *args),
+            text=True,
+            capture_output=True,
+        ).stdout
     )
-    if "error" in loads(command.stdout.decode()):
-        raise RuntimeError(f"curl command failed with: {command.stdout.decode()}")
-    return command
+    if "error" in output:
+        raise RuntimeError(f"curl command failed with: {output['error']}")
+    return output
 
 
 def get(path):
-    return curl(path).stdout.decode()
+    return curl(path)
 
 
 def put(data, path):
-    curl("-X", "PUT", "--data-binary", data, path)
+    return curl("-X", "PUT", "--data-binary", data, path)
 
 
 def delete(path):
-    curl("-X", "DELETE", path)
+    return curl("-X", "DELETE", path)
 
 
 def certs(domain):
     return sorted(
-        cert
-        for cert in loads(get("localhost/certificates"))
-        if cert.startswith(f"{domain}-")
+        cert for cert in get("localhost/certificates") if cert.startswith(f"{domain}-")
     )
 
 
@@ -42,7 +43,7 @@ def certs(domain):
 def suspend_listener(listener):
     contents = get(f"localhost/config/listeners/{listener}")
     with open(f"/opt/unit/backup-listener-{listener}", "w") as backup:
-        backup.write(contents)
+        backup.write(dumps(contents))
     delete(f"localhost/config/listeners/{listener}")
 
 
