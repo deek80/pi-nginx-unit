@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from datetime import date
+from datetime import datetime
 from json import dumps, loads
 from subprocess import run
 from sys import argv
@@ -37,6 +37,14 @@ def certs(domain):
     )
 
 
+def timestamp():
+    return datetime.now().strftime("%s")
+
+
+def today():
+    return datetime.date().isoformat()
+
+
 # Entrypoints
 
 
@@ -59,19 +67,38 @@ def use_latest_cert(domain, listener):
 
 
 def load_cert(domain):
-    cert_name = f"{domain}-{date.today().isoformat()}"
-
     with open(f"/etc/letsencrypt/live/{domain}/fullchain.pem", "r") as pem:
         cert_data = pem.read()
     with open(f"/etc/letsencrypt/live/{domain}/privkey.pem", "r") as pem:
         cert_data += pem.read()
 
-    put(cert_data, f"localhost/certificates/{cert_name}")
+    put(cert_data, f"localhost/certificates/{domain}-{today()}")
 
 
 def delete_old_certs(domain):
     for cert in certs(domain)[:-2]:  # keep the last 2
         delete(f"localhost/certificates/{cert}")
+
+
+def create_python_app(name, path, module, processes=1, app="app"):
+    config = {
+        "type": "python",
+        "home": f"{path}/.venv",
+        "path": path,
+        "module": module,
+        "callable": app,
+        "processes": int(processes),
+        "environment": {"published": dumps(timestamp())},
+    }
+    put(dumps(config), f"localhost/config/applications/{name}")
+
+
+def refresh_app(name):
+    """ workaround to restart an app when you update the source """
+    put(
+        dumps(timestamp()),
+        f"localhost/config/applications/{name}/environment/published",
+    )
 
 
 if __name__ == "__main__":
@@ -81,6 +108,8 @@ if __name__ == "__main__":
         "use-latest-cert": use_latest_cert,
         "load-cert": load_cert,
         "delete-old-certs": delete_old_certs,
+        "create-app": create_python_app,
+        "refresh-app": refresh_app,
     }
 
     _this, entrypoint, *args = argv
