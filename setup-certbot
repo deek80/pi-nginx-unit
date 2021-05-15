@@ -33,4 +33,4 @@ make_script /etc/letsencrypt/renewal-hooks/deploy/"$domain" \
   "/opt/unit/sbin/unit-admin use-latest-cert '$domain' '*:443'" \
   "/opt/unit/sbin/unit-admin delete-old-certs '$domain'"
 
-make_script /etc/cron.weekly/certbot-renew "certbot renew"
+make_script /etc/cron.weekly/certbot-renew "certbot renew >>/opt/unit/unit.cert-renewal.log 2>&1"

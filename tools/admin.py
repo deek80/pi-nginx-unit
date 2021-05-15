@@ -42,7 +42,7 @@ def timestamp():
 
 
 def today():
-    return datetime.date().isoformat()
+    return datetime.now().date().isoformat()
 
 
 # Entrypoints
