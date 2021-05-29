@@ -88,7 +88,7 @@ def create_python_app(name, path, module, processes=1, app="app"):
         "module": module,
         "callable": app,
         "processes": int(processes),
-        "environment": {"published": dumps(timestamp())},
+        "environment": {"published": timestamp()},
     }
     put(dumps(config), f"localhost/config/applications/{name}")
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         "use-latest-cert": use_latest_cert,
         "load-cert": load_cert,
         "delete-old-certs": delete_old_certs,
-        "create-app": create_python_app,
+        "create-python-app": create_python_app,
         "refresh-app": refresh_app,
     }
 
