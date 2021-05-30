@@ -11,6 +11,6 @@ set -e
 
 curl='curl -sS --unix-socket /opt/unit/control.unit.sock'
 tmp=~/.tmp-unit-config.json
-path=localhost/config/$1
+path=localhost/config/"$1"
 
-$curl $path >$tmp && vim $tmp && $curl -X PUT --data-binary @$tmp $path
+$curl "$path" >"$tmp" && vim "$tmp" && $curl -X PUT --data-binary @"$tmp" "$path"
